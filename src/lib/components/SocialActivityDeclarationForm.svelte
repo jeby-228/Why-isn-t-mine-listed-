@@ -110,7 +110,7 @@
 
 <div class="mx-auto w-full max-w-3xl">
 	{#if submitted}
-		<div class="card space-y-6 p-8 text-center">
+		<div class="space-y-6 card p-8 text-center">
 			<div class="mx-auto flex size-16 items-center justify-center rounded-full bg-success-500/15">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -136,26 +136,31 @@
 			{#if !pdfExported}
 				<div class="rounded-lg border border-surface-200-800 bg-surface-50-950 p-6 text-left">
 					<h3 class="mb-2 text-lg font-semibold">是否要匯出成 PDF？</h3>
-					<p class="mb-4 text-sm text-surface-600-300">
+					<p class="text-surface-600-300 mb-4 text-sm">
 						可將本次填寫內容與簽名匯出為 PDF 檔案，方便留存或列印。
 					</p>
 					<div class="flex flex-col gap-3 sm:flex-row">
 						<button
 							type="button"
-							class="btn preset-filled flex-1"
+							class="btn flex-1 preset-filled"
 							disabled={isExportingPdf}
 							onclick={handleExportPdf}
 						>
 							{isExportingPdf ? '匯出中…' : '匯出 PDF'}
 						</button>
-						<button type="button" class="btn preset-tonal flex-1" onclick={skipPdfExport}>
+						<button type="button" class="btn flex-1 preset-tonal" onclick={skipPdfExport}>
 							稍後再說
 						</button>
 					</div>
 				</div>
 			{:else}
 				<p class="text-sm text-surface-500">PDF 已下載，或您選擇稍後再匯出。</p>
-				<button type="button" class="btn preset-tonal" onclick={handleExportPdf} disabled={isExportingPdf}>
+				<button
+					type="button"
+					class="btn preset-tonal"
+					onclick={handleExportPdf}
+					disabled={isExportingPdf}
+				>
 					{isExportingPdf ? '匯出中…' : '再次匯出 PDF'}
 				</button>
 			{/if}
@@ -163,14 +168,14 @@
 			<button type="button" class="btn preset-tonal" onclick={handleReset}>填寫另一份</button>
 		</div>
 	{:else}
-		<form class="card overflow-hidden" onsubmit={handleSubmit}>
+		<form class="overflow-hidden card" onsubmit={handleSubmit}>
 			<header class="border-b border-surface-200-800 px-6 py-8 text-center">
 				<h1 class="text-2xl font-bold tracking-wide md:text-3xl">員工自主聲明書</h1>
-				<p class="mt-2 text-surface-600-300">（辦公室日常社交活動參與意願）</p>
+				<p class="text-surface-600-300 mt-2">（辦公室日常社交活動參與意願）</p>
 			</header>
 
 			<div class="space-y-8 px-6 py-8">
-				<p class="leading-relaxed text-surface-700-200">
+				<p class="text-surface-700-200 leading-relaxed">
 					為保障同仁個人自主權，凡公司內部之非公務日常社交活動（如：辦公室訂購飲品、下午茶、團購等），均以「完全自願」為原則。請詳閱以下聲明內容並確認：
 				</p>
 
@@ -200,10 +205,7 @@
 									</td>
 								</tr>
 								<tr>
-									<th
-										scope="row"
-										class="bg-surface-100-900 px-4 py-3 text-left font-semibold"
-									>
+									<th scope="row" class="bg-surface-100-900 px-4 py-3 text-left font-semibold">
 										部門 / 職稱
 									</th>
 									<td class="px-4 py-3">

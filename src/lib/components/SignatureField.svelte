@@ -188,7 +188,7 @@
 				class="flex min-h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-6 transition-colors hover:bg-surface-100-900"
 			>
 				<UploadIcon class="size-8 text-surface-400" />
-				<span class="text-sm text-surface-600-300">點擊上傳簽名圖片（PNG、JPG）</span>
+				<span class="text-surface-600-300 text-sm">點擊上傳簽名圖片（PNG、JPG）</span>
 				<input
 					type="file"
 					accept="image/png,image/jpeg,image/webp"
@@ -205,6 +205,6 @@
 	{/if}
 
 	<div class="flex justify-end">
-		<button type="button" class="btn btn-sm preset-tonal" onclick={clearSignature}>清除簽名</button>
+		<button type="button" class="btn preset-tonal btn-sm" onclick={clearSignature}>清除簽名</button>
 	</div>
 </div>
