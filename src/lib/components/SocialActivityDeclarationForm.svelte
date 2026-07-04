@@ -1,4 +1,7 @@
 <script lang="ts">
+	import SignatureField from '$lib/components/SignatureField.svelte';
+	import { exportDeclarationPdf, type DeclarationPdfData } from '$lib/exportDeclarationPdf';
+
 	const declarationItems = [
 		'本人已充分知悉並理解公司之職場友善原則。',
 		'對於辦公室日常之社交訂購活動（如訂飲料、點心等），本人目前基於個人飲食習慣、健康管理或其他個人考量，選擇不參與。',
@@ -20,11 +23,14 @@
 	let name = $state('');
 	let department = $state('');
 	let agreedItems = $state<boolean[]>(declarationItems.map(() => false));
-	let signature = $state('');
+	let signatureDataUrl = $state('');
 	let rocYear = $state(today.rocYear);
 	let month = $state(today.month);
 	let day = $state(today.day);
 	let submitted = $state(false);
+	let submittedData = $state<DeclarationPdfData | null>(null);
+	let pdfExported = $state(false);
+	let isExportingPdf = $state(false);
 	let selectAllCheckbox = $state<HTMLInputElement | null>(null);
 
 	const allAgreed = $derived(agreedItems.every(Boolean));
@@ -33,11 +39,25 @@
 		name.trim() !== '' &&
 			department.trim() !== '' &&
 			allAgreed &&
-			signature.trim() !== '' &&
+			signatureDataUrl !== '' &&
 			rocYear.trim() !== '' &&
 			month.trim() !== '' &&
 			day.trim() !== ''
 	);
+
+	const submittedSnapshot = $derived(submittedData);
+
+	function createSubmittedData(): DeclarationPdfData {
+		return {
+			name: name.trim(),
+			department: department.trim(),
+			declarationItems,
+			rocYear,
+			month,
+			day,
+			signatureDataUrl
+		};
+	}
 
 	$effect(() => {
 		if (selectAllCheckbox) {
@@ -52,7 +72,9 @@
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!isValid) return;
+		submittedData = createSubmittedData();
 		submitted = true;
+		pdfExported = false;
 	}
 
 	function handleReset() {
@@ -60,17 +82,35 @@
 		name = '';
 		department = '';
 		agreedItems = declarationItems.map(() => false);
-		signature = '';
+		signatureDataUrl = '';
 		rocYear = resetDate.rocYear;
 		month = resetDate.month;
 		day = resetDate.day;
 		submitted = false;
+		submittedData = null;
+		pdfExported = false;
+	}
+
+	async function handleExportPdf() {
+		if (isExportingPdf || !submittedSnapshot) return;
+
+		isExportingPdf = true;
+		try {
+			await exportDeclarationPdf(submittedSnapshot);
+			pdfExported = true;
+		} finally {
+			isExportingPdf = false;
+		}
+	}
+
+	function skipPdfExport() {
+		pdfExported = true;
 	}
 </script>
 
 <div class="mx-auto w-full max-w-3xl">
 	{#if submitted}
-		<div class="card space-y-4 p-8 text-center">
+		<div class="card space-y-6 p-8 text-center">
 			<div class="mx-auto flex size-16 items-center justify-center rounded-full bg-success-500/15">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -86,10 +126,40 @@
 					<path d="M20 6 9 17l-5-5" />
 				</svg>
 			</div>
-			<h2 class="text-2xl font-bold">聲明書已提交</h2>
-			<p class="text-surface-600-300">
-				感謝 {name} 完成填寫。目前僅為前端預覽，後續將串接儲存功能。
-			</p>
+			<div class="space-y-2">
+				<h2 class="text-2xl font-bold">聲明書已提交</h2>
+				<p class="text-surface-600-300">
+					感謝 {submittedData?.name ?? name} 完成填寫。目前僅為前端預覽，後續將串接儲存功能。
+				</p>
+			</div>
+
+			{#if !pdfExported}
+				<div class="rounded-lg border border-surface-200-800 bg-surface-50-950 p-6 text-left">
+					<h3 class="mb-2 text-lg font-semibold">是否要匯出成 PDF？</h3>
+					<p class="mb-4 text-sm text-surface-600-300">
+						可將本次填寫內容與簽名匯出為 PDF 檔案，方便留存或列印。
+					</p>
+					<div class="flex flex-col gap-3 sm:flex-row">
+						<button
+							type="button"
+							class="btn preset-filled flex-1"
+							disabled={isExportingPdf}
+							onclick={handleExportPdf}
+						>
+							{isExportingPdf ? '匯出中…' : '匯出 PDF'}
+						</button>
+						<button type="button" class="btn preset-tonal flex-1" onclick={skipPdfExport}>
+							稍後再說
+						</button>
+					</div>
+				</div>
+			{:else}
+				<p class="text-sm text-surface-500">PDF 已下載，或您選擇稍後再匯出。</p>
+				<button type="button" class="btn preset-tonal" onclick={handleExportPdf} disabled={isExportingPdf}>
+					{isExportingPdf ? '匯出中…' : '再次匯出 PDF'}
+				</button>
+			{/if}
+
 			<button type="button" class="btn preset-tonal" onclick={handleReset}>填寫另一份</button>
 		</div>
 	{:else}
@@ -199,55 +269,44 @@
 					class="space-y-6 border-t border-surface-200-800 pt-6"
 					aria-labelledby="signature-heading"
 				>
-					<h2 id="signature-heading" class="sr-only">簽名與日期</h2>
+					<h2 id="signature-heading" class="text-base font-semibold">立聲明書人（簽名）</h2>
 
-					<div class="flex flex-col items-end gap-4">
-						<label class="flex w-full max-w-md flex-wrap items-center justify-end gap-2">
-							<span class="shrink-0">立聲明書人（簽名）：</span>
-							<input
-								type="text"
-								bind:value={signature}
-								class="input min-w-0 flex-1"
-								placeholder="請輸入簽名"
-								required
-							/>
-						</label>
+					<SignatureField bind:signatureDataUrl />
 
-						<fieldset class="flex w-full max-w-md flex-wrap items-center justify-end gap-2">
-							<legend class="sr-only">日期（中華民國）</legend>
-							<span class="shrink-0">日期：中華民國</span>
-							<input
-								type="text"
-								inputmode="numeric"
-								bind:value={rocYear}
-								class="input w-16 text-center"
-								placeholder="年"
-								maxlength="3"
-								required
-							/>
-							<span>年</span>
-							<input
-								type="text"
-								inputmode="numeric"
-								bind:value={month}
-								class="input w-12 text-center"
-								placeholder="月"
-								maxlength="2"
-								required
-							/>
-							<span>月</span>
-							<input
-								type="text"
-								inputmode="numeric"
-								bind:value={day}
-								class="input w-12 text-center"
-								placeholder="日"
-								maxlength="2"
-								required
-							/>
-							<span>日</span>
-						</fieldset>
-					</div>
+					<fieldset class="flex flex-wrap items-center justify-end gap-2">
+						<legend class="sr-only">日期（中華民國）</legend>
+						<span class="shrink-0">日期：中華民國</span>
+						<input
+							type="text"
+							inputmode="numeric"
+							bind:value={rocYear}
+							class="input w-16 text-center"
+							placeholder="年"
+							maxlength="3"
+							required
+						/>
+						<span>年</span>
+						<input
+							type="text"
+							inputmode="numeric"
+							bind:value={month}
+							class="input w-12 text-center"
+							placeholder="月"
+							maxlength="2"
+							required
+						/>
+						<span>月</span>
+						<input
+							type="text"
+							inputmode="numeric"
+							bind:value={day}
+							class="input w-12 text-center"
+							placeholder="日"
+							maxlength="2"
+							required
+						/>
+						<span>日</span>
+					</fieldset>
 				</section>
 
 				<div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
