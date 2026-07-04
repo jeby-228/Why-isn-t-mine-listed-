@@ -1,0 +1,224 @@
+<script lang="ts">
+	const declarationItems = [
+		'本人已充分知悉並理解公司之職場友善原則。',
+		'對於辦公室日常之社交訂購活動（如訂飲料、點心等），本人目前基於個人飲食習慣、健康管理或其他個人考量，選擇不參與。',
+		'前述決定完全出自本人之自由意志，未受到公司任何管理階層、主管或同仁之強迫、威脅、利誘或不當施壓。',
+		'公司已明確告知，本人隨時可依個人意願改變此決定，且此決定絕不影響本人於公司之績效考核、職涯發展及勞動權益。'
+	];
+
+	let name = $state('');
+	let department = $state('');
+	let agreedItems = $state<boolean[]>(declarationItems.map(() => false));
+	let signature = $state('');
+	let rocYear = $state('');
+	let month = $state('');
+	let day = $state('');
+	let submitted = $state(false);
+
+	const allAgreed = $derived(agreedItems.every(Boolean));
+	const isValid = $derived(
+		name.trim() !== '' &&
+			department.trim() !== '' &&
+			allAgreed &&
+			signature.trim() !== '' &&
+			rocYear.trim() !== '' &&
+			month.trim() !== '' &&
+			day.trim() !== ''
+	);
+
+	function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		if (!isValid) return;
+		submitted = true;
+	}
+
+	function handleReset() {
+		name = '';
+		department = '';
+		agreedItems = declarationItems.map(() => false);
+		signature = '';
+		rocYear = '';
+		month = '';
+		day = '';
+		submitted = false;
+	}
+</script>
+
+<div class="mx-auto w-full max-w-3xl">
+	{#if submitted}
+		<div class="card space-y-4 p-8 text-center">
+			<div class="mx-auto flex size-16 items-center justify-center rounded-full bg-success-500/15">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="size-8 text-success-500"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="M20 6 9 17l-5-5" />
+				</svg>
+			</div>
+			<h2 class="text-2xl font-bold">聲明書已提交</h2>
+			<p class="text-surface-600-300">
+				感謝 {name} 完成填寫。目前僅為前端預覽，後續將串接儲存功能。
+			</p>
+			<button type="button" class="btn preset-tonal" onclick={handleReset}>填寫另一份</button>
+		</div>
+	{:else}
+		<form class="card overflow-hidden" onsubmit={handleSubmit}>
+			<header class="border-b border-surface-200-800 px-6 py-8 text-center">
+				<h1 class="text-2xl font-bold tracking-wide md:text-3xl">員工自主聲明書</h1>
+				<p class="mt-2 text-surface-600-300">（辦公室日常社交活動參與意願）</p>
+			</header>
+
+			<div class="space-y-8 px-6 py-8">
+				<p class="leading-relaxed text-surface-700-200">
+					為保障同仁個人自主權，凡公司內部之非公務日常社交活動（如：辦公室訂購飲品、下午茶、團購等），均以「完全自願」為原則。請詳閱以下聲明內容並確認：
+				</p>
+
+				<section aria-labelledby="personal-info-heading">
+					<h2 id="personal-info-heading" class="sr-only">個人資料</h2>
+					<div class="overflow-hidden rounded-lg border border-surface-200-800">
+						<table class="w-full border-collapse text-sm md:text-base">
+							<tbody>
+								<tr class="border-b border-surface-200-800">
+									<th
+										scope="row"
+										class="w-36 bg-surface-100-900 px-4 py-3 text-left font-semibold md:w-44"
+									>
+										立聲明書人
+									</th>
+									<td class="px-4 py-3">
+										<label class="flex flex-wrap items-center gap-2">
+											<span class="shrink-0">姓名：</span>
+											<input
+												type="text"
+												bind:value={name}
+												class="input min-w-0 flex-1"
+												placeholder="請填寫姓名"
+												required
+											/>
+										</label>
+									</td>
+								</tr>
+								<tr>
+									<th
+										scope="row"
+										class="bg-surface-100-900 px-4 py-3 text-left font-semibold"
+									>
+										部門 / 職稱
+									</th>
+									<td class="px-4 py-3">
+										<input
+											type="text"
+											bind:value={department}
+											class="input w-full"
+											placeholder="例：資訊部 / 工程師"
+											required
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<section aria-labelledby="declaration-items-heading">
+					<h2 id="declaration-items-heading" class="sr-only">聲明項目</h2>
+					<div class="overflow-hidden rounded-lg border border-surface-200-800">
+						<table class="w-full border-collapse text-sm md:text-base">
+							<thead>
+								<tr class="border-b border-surface-200-800 bg-surface-100-900">
+									<th scope="col" class="w-16 px-4 py-3 text-left font-semibold">項目</th>
+									<th scope="col" class="px-4 py-3 text-left font-semibold">聲明內容</th>
+									<th scope="col" class="w-20 px-4 py-3 text-center font-semibold">確認</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each declarationItems as item, index (index)}
+									<tr class="border-b border-surface-200-800 last:border-b-0">
+										<td class="px-4 py-4 align-top font-medium">{index + 1}</td>
+										<td class="px-4 py-4 align-top leading-relaxed">{item}</td>
+										<td class="px-4 py-4 text-center align-top">
+											<input
+												type="checkbox"
+												class="checkbox size-5"
+												bind:checked={agreedItems[index]}
+												aria-label="確認項目 {index + 1}"
+												required
+											/>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<section
+					class="space-y-6 border-t border-surface-200-800 pt-6"
+					aria-labelledby="signature-heading"
+				>
+					<h2 id="signature-heading" class="sr-only">簽名與日期</h2>
+
+					<div class="flex flex-col items-end gap-4">
+						<label class="flex w-full max-w-md flex-wrap items-center justify-end gap-2">
+							<span class="shrink-0">立聲明書人（簽名）：</span>
+							<input
+								type="text"
+								bind:value={signature}
+								class="input min-w-0 flex-1"
+								placeholder="請輸入簽名"
+								required
+							/>
+						</label>
+
+						<fieldset class="flex w-full max-w-md flex-wrap items-center justify-end gap-2">
+							<legend class="sr-only">日期（中華民國）</legend>
+							<span class="shrink-0">日期：中華民國</span>
+							<input
+								type="text"
+								inputmode="numeric"
+								bind:value={rocYear}
+								class="input w-16 text-center"
+								placeholder="年"
+								maxlength="3"
+								required
+							/>
+							<span>年</span>
+							<input
+								type="text"
+								inputmode="numeric"
+								bind:value={month}
+								class="input w-12 text-center"
+								placeholder="月"
+								maxlength="2"
+								required
+							/>
+							<span>月</span>
+							<input
+								type="text"
+								inputmode="numeric"
+								bind:value={day}
+								class="input w-12 text-center"
+								placeholder="日"
+								maxlength="2"
+								required
+							/>
+							<span>日</span>
+						</fieldset>
+					</div>
+				</section>
+
+				<div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+					<button type="button" class="btn preset-tonal" onclick={handleReset}>清除重填</button>
+					<button type="submit" class="btn preset-filled" disabled={!isValid}>提交聲明書</button>
+				</div>
+			</div>
+		</form>
+	{/if}
+</div>

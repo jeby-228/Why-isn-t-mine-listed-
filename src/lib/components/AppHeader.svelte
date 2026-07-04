@@ -36,7 +36,9 @@
 			</button>
 		</AppBar.Lead>
 		<AppBar.Headline>
-			<a href={resolve('/')} class="text-2xl transition-opacity hover:opacity-80"> Jeby Website </a>
+			<a href={resolve('/')} class="text-2xl transition-opacity hover:opacity-80">
+				員工自主聲明書
+			</a>
 		</AppBar.Headline>
 		<AppBar.Trail>
 			<ThemeSwitcher />
