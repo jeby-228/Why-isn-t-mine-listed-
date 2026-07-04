@@ -1,6 +1,10 @@
 <script lang="ts">
 	import SignatureField from '$lib/components/SignatureField.svelte';
-	import { exportDeclarationPdf, type DeclarationPdfData } from '$lib/exportDeclarationPdf';
+	import {
+		downloadPdfBlob,
+		exportDeclarationPdf,
+		type DeclarationPdfData
+	} from '$lib/exportDeclarationPdf';
 
 	const declarationItems = [
 		'本人已充分知悉並理解公司之職場友善原則。',
@@ -26,6 +30,9 @@
 	let submittedData = $state<DeclarationPdfData | null>(null);
 	let pdfExported = $state(false);
 	let isExportingPdf = $state(false);
+	let pdfDownloadUrl = $state<string | null>(null);
+	let pdfFilename = $state('');
+	let exportError = $state('');
 	let selectAllCheckbox = $state<HTMLInputElement | null>(null);
 
 	const allAgreed = $derived(agreedItems.every(Boolean));
@@ -68,6 +75,13 @@
 		pdfExported = false;
 	}
 
+	function clearPdfDownloadUrl() {
+		if (pdfDownloadUrl) {
+			URL.revokeObjectURL(pdfDownloadUrl);
+			pdfDownloadUrl = null;
+		}
+	}
+
 	function handleReset() {
 		name = '';
 		department = '';
@@ -77,15 +91,26 @@
 		submitted = false;
 		submittedData = null;
 		pdfExported = false;
+		exportError = '';
+		clearPdfDownloadUrl();
+		pdfFilename = '';
 	}
 
 	async function handleExportPdf() {
 		if (isExportingPdf || !submittedSnapshot) return;
 
 		isExportingPdf = true;
+		exportError = '';
+		clearPdfDownloadUrl();
+
 		try {
-			await exportDeclarationPdf(submittedSnapshot);
+			const { blob, filename } = await exportDeclarationPdf(submittedSnapshot);
+			pdfFilename = filename;
+			pdfDownloadUrl = downloadPdfBlob(blob, filename);
 			pdfExported = true;
+		} catch (error) {
+			exportError =
+				error instanceof Error ? error.message : 'PDF 匯出失敗，請稍後再試或改用其他瀏覽器。';
 		} finally {
 			isExportingPdf = false;
 		}
@@ -140,9 +165,22 @@
 							稍後再說
 						</button>
 					</div>
+					{#if exportError}
+						<p class="mt-3 text-sm text-error-500">{exportError}</p>
+					{/if}
 				</div>
 			{:else}
-				<p class="text-sm text-surface-500">PDF 已下載，或您選擇稍後再匯出。</p>
+				<div class="space-y-3">
+					<p class="text-sm text-surface-500">PDF 已產生。若瀏覽器未自動下載，請點下方連結。</p>
+					{#if pdfDownloadUrl}
+						<a href={pdfDownloadUrl} download={pdfFilename} class="btn inline-flex preset-filled">
+							下載 PDF
+						</a>
+					{/if}
+					{#if exportError}
+						<p class="text-sm text-error-500">{exportError}</p>
+					{/if}
+				</div>
 				<button
 					type="button"
 					class="btn preset-tonal"

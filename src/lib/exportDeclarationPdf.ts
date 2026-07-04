@@ -1,5 +1,4 @@
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { browser } from '$app/environment';
 
 export interface DeclarationPdfData {
 	name: string;
@@ -7,6 +6,11 @@ export interface DeclarationPdfData {
 	declarationItems: readonly string[];
 	date: string;
 	signatureDataUrl: string;
+}
+
+export interface DeclarationPdfResult {
+	blob: Blob;
+	filename: string;
 }
 
 function formatDeclarationDate(date: string) {
@@ -17,12 +21,20 @@ function formatDeclarationDate(date: string) {
 	return `西元 ${year} 年 ${Number(month)} 月 ${Number(day)} 日`;
 }
 
+function escapeHtml(value: string) {
+	return value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;');
+}
+
 function buildPrintableElement(data: DeclarationPdfData) {
 	const container = document.createElement('div');
 	container.style.cssText = [
 		'position: fixed',
-		'left: -9999px',
-		'top: 0',
+		'inset: 0 auto auto 0',
 		'width: 794px',
 		'padding: 48px 56px',
 		'background: #ffffff',
@@ -30,7 +42,10 @@ function buildPrintableElement(data: DeclarationPdfData) {
 		'font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif',
 		'font-size: 14px',
 		'line-height: 1.7',
-		'box-sizing: border-box'
+		'box-sizing: border-box',
+		'opacity: 0',
+		'pointer-events: none',
+		'z-index: -1'
 	].join(';');
 
 	const itemsHtml = data.declarationItems
@@ -38,7 +53,7 @@ function buildPrintableElement(data: DeclarationPdfData) {
 			(item, index) => `
 			<tr>
 				<td style="border: 1px solid #333; padding: 10px 12px; width: 48px; vertical-align: top; text-align: center;">${index + 1}</td>
-				<td style="border: 1px solid #333; padding: 10px 12px; vertical-align: top;">${item}</td>
+				<td style="border: 1px solid #333; padding: 10px 12px; vertical-align: top;">${escapeHtml(item)}</td>
 				<td style="border: 1px solid #333; padding: 10px 12px; width: 56px; vertical-align: top; text-align: center;">✓</td>
 			</tr>`
 		)
@@ -53,11 +68,11 @@ function buildPrintableElement(data: DeclarationPdfData) {
 		<table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
 			<tr>
 				<th style="border: 1px solid #333; padding: 10px 12px; width: 120px; text-align: left; background: #f5f5f5;">立聲明書人</th>
-				<td style="border: 1px solid #333; padding: 10px 12px;">姓名：${data.name}</td>
+				<td style="border: 1px solid #333; padding: 10px 12px;">姓名：${escapeHtml(data.name)}</td>
 			</tr>
 			<tr>
 				<th style="border: 1px solid #333; padding: 10px 12px; text-align: left; background: #f5f5f5;">部門 / 職稱</th>
-				<td style="border: 1px solid #333; padding: 10px 12px;">${data.department}</td>
+				<td style="border: 1px solid #333; padding: 10px 12px;">${escapeHtml(data.department)}</td>
 			</tr>
 		</table>
 		<table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
@@ -82,38 +97,97 @@ function buildPrintableElement(data: DeclarationPdfData) {
 	return container;
 }
 
-export async function exportDeclarationPdf(data: DeclarationPdfData) {
+async function waitForImages(element: HTMLElement) {
+	const images = Array.from(element.querySelectorAll('img'));
+
+	await Promise.all(
+		images.map(
+			(image) =>
+				new Promise<void>((resolve) => {
+					if (image.complete && image.naturalWidth > 0) {
+						resolve();
+						return;
+					}
+
+					image.onload = () => resolve();
+					image.onerror = () => resolve();
+				})
+		)
+	);
+}
+
+async function waitForLayout() {
+	await new Promise<void>((resolve) => {
+		requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+	});
+}
+
+export function downloadPdfBlob(blob: Blob, filename: string) {
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = filename;
+	link.rel = 'noopener';
+	document.body.appendChild(link);
+	link.click();
+	link.remove();
+	return url;
+}
+
+export async function exportDeclarationPdf(
+	data: DeclarationPdfData
+): Promise<DeclarationPdfResult> {
+	if (!browser) {
+		throw new Error('PDF 匯出僅能在瀏覽器中使用');
+	}
+
+	const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+		import('html2canvas'),
+		import('jspdf')
+	]);
+
 	const element = buildPrintableElement(data);
 	document.body.appendChild(element);
 
 	try {
+		await waitForLayout();
+		await waitForImages(element);
+
 		const canvas = await html2canvas(element, {
 			scale: 2,
 			useCORS: true,
-			backgroundColor: '#ffffff'
+			backgroundColor: '#ffffff',
+			logging: false
 		});
+
+		if (canvas.width === 0 || canvas.height === 0) {
+			throw new Error('無法產生 PDF 預覽內容');
+		}
 
 		const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 		const pageWidth = pdf.internal.pageSize.getWidth();
 		const pageHeight = pdf.internal.pageSize.getHeight();
 		const imgWidth = pageWidth;
 		const imgHeight = (canvas.height * imgWidth) / canvas.width;
+		const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
 		let heightLeft = imgHeight;
 		let position = 0;
-		const imgData = canvas.toDataURL('image/png');
 
-		pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+		pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
 		heightLeft -= pageHeight;
 
 		while (heightLeft > 0) {
 			position = heightLeft - imgHeight;
 			pdf.addPage();
-			pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+			pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
 			heightLeft -= pageHeight;
 		}
 
-		pdf.save(`員工自主聲明書_${data.name}.pdf`);
+		const filename = `員工自主聲明書_${data.name}.pdf`;
+		const blob = pdf.output('blob');
+
+		return { blob, filename };
 	} finally {
 		document.body.removeChild(element);
 	}
