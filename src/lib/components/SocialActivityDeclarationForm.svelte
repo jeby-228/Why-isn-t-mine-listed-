@@ -6,16 +6,29 @@
 		'公司已明確告知，本人隨時可依個人意願改變此決定，且此決定絕不影響本人於公司之績效考核、職涯發展及勞動權益。'
 	];
 
+	function getTodayRocDate() {
+		const now = new Date();
+		return {
+			rocYear: String(now.getFullYear() - 1911),
+			month: String(now.getMonth() + 1),
+			day: String(now.getDate())
+		};
+	}
+
+	const today = getTodayRocDate();
+
 	let name = $state('');
 	let department = $state('');
 	let agreedItems = $state<boolean[]>(declarationItems.map(() => false));
 	let signature = $state('');
-	let rocYear = $state('');
-	let month = $state('');
-	let day = $state('');
+	let rocYear = $state(today.rocYear);
+	let month = $state(today.month);
+	let day = $state(today.day);
 	let submitted = $state(false);
+	let selectAllCheckbox = $state<HTMLInputElement | null>(null);
 
 	const allAgreed = $derived(agreedItems.every(Boolean));
+	const someAgreed = $derived(agreedItems.some(Boolean) && !allAgreed);
 	const isValid = $derived(
 		name.trim() !== '' &&
 			department.trim() !== '' &&
@@ -26,6 +39,16 @@
 			day.trim() !== ''
 	);
 
+	$effect(() => {
+		if (selectAllCheckbox) {
+			selectAllCheckbox.indeterminate = someAgreed;
+		}
+	});
+
+	function toggleAllAgreed(checked: boolean) {
+		agreedItems = declarationItems.map(() => checked);
+	}
+
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!isValid) return;
@@ -33,13 +56,14 @@
 	}
 
 	function handleReset() {
+		const resetDate = getTodayRocDate();
 		name = '';
 		department = '';
 		agreedItems = declarationItems.map(() => false);
 		signature = '';
-		rocYear = '';
-		month = '';
-		day = '';
+		rocYear = resetDate.rocYear;
+		month = resetDate.month;
+		day = resetDate.day;
 		submitted = false;
 	}
 </script>
@@ -135,7 +159,19 @@
 								<tr class="border-b border-surface-200-800 bg-surface-100-900">
 									<th scope="col" class="w-16 px-4 py-3 text-left font-semibold">項目</th>
 									<th scope="col" class="px-4 py-3 text-left font-semibold">聲明內容</th>
-									<th scope="col" class="w-20 px-4 py-3 text-center font-semibold">確認</th>
+									<th scope="col" class="w-20 px-4 py-3 text-center font-semibold">
+										<label class="inline-flex cursor-pointer flex-col items-center gap-1">
+											<input
+												bind:this={selectAllCheckbox}
+												type="checkbox"
+												class="checkbox size-5"
+												checked={allAgreed}
+												onchange={(e) => toggleAllAgreed(e.currentTarget.checked)}
+												aria-label="全部勾選"
+											/>
+											<span class="text-xs font-normal">全部</span>
+										</label>
+									</th>
 								</tr>
 							</thead>
 							<tbody>
