@@ -30,11 +30,9 @@ function escapeHtml(value: string) {
 		.replaceAll("'", '&#39;');
 }
 
-function buildPrintableElement(data: DeclarationPdfData) {
-	const container = document.createElement('div');
+function buildPrintableElement(doc: Document, data: DeclarationPdfData) {
+	const container = doc.createElement('div');
 	container.style.cssText = [
-		'position: fixed',
-		'inset: 0 auto auto 0',
 		'width: 794px',
 		'padding: 48px 56px',
 		'background: #ffffff',
@@ -42,10 +40,7 @@ function buildPrintableElement(data: DeclarationPdfData) {
 		'font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif',
 		'font-size: 14px',
 		'line-height: 1.7',
-		'box-sizing: border-box',
-		'opacity: 0',
-		'pointer-events: none',
-		'z-index: -1'
+		'box-sizing: border-box'
 	].join(';');
 
 	const itemsHtml = data.declarationItems
@@ -97,6 +92,28 @@ function buildPrintableElement(data: DeclarationPdfData) {
 	return container;
 }
 
+function createIsolatedRenderRoot() {
+	const iframe = document.createElement('iframe');
+	iframe.setAttribute('aria-hidden', 'true');
+	iframe.style.cssText =
+		'position:fixed;left:-10000px;top:0;width:794px;height:1200px;border:0;visibility:hidden;';
+	document.body.appendChild(iframe);
+
+	const doc = iframe.contentDocument;
+	if (!doc) {
+		iframe.remove();
+		throw new Error('無法建立 PDF 渲染環境');
+	}
+
+	doc.open();
+	doc.write(
+		'<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#ffffff;"></body></html>'
+	);
+	doc.close();
+
+	return { iframe, root: doc.body, doc };
+}
+
 async function waitForImages(element: HTMLElement) {
 	const images = Array.from(element.querySelectorAll('img'));
 
@@ -146,8 +163,9 @@ export async function exportDeclarationPdf(
 		import('jspdf')
 	]);
 
-	const element = buildPrintableElement(data);
-	document.body.appendChild(element);
+	const { iframe, root, doc } = createIsolatedRenderRoot();
+	const element = buildPrintableElement(doc, data);
+	root.appendChild(element);
 
 	try {
 		await waitForLayout();
@@ -155,9 +173,14 @@ export async function exportDeclarationPdf(
 
 		const canvas = await html2canvas(element, {
 			scale: 2,
-			useCORS: true,
 			backgroundColor: '#ffffff',
-			logging: false
+			logging: false,
+			windowWidth: 794,
+			onclone: (clonedDoc) => {
+				clonedDoc
+					.querySelectorAll('style, link[rel="stylesheet"]')
+					.forEach((node) => node.remove());
+			}
 		});
 
 		if (canvas.width === 0 || canvas.height === 0) {
@@ -189,6 +212,6 @@ export async function exportDeclarationPdf(
 
 		return { blob, filename };
 	} finally {
-		document.body.removeChild(element);
+		iframe.remove();
 	}
 }
