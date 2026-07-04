@@ -1,0 +1,14 @@
+/*
+ * 自訂主題
+ * 從 https://themes.skeleton.dev/themes/create 產生
+ * 將產生器複製的 CSS 貼到這裡
+ */
+
+[data-theme='custom-theme'] {
+	/* 將從 Theme Generator 複製的 CSS 變數貼在這裡 */
+	/* 例如：
+	--color-primary-50: ...;
+	--color-primary-100: ...;
+	等等
+	*/
+}
