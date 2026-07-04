@@ -5,10 +5,16 @@ export interface DeclarationPdfData {
 	name: string;
 	department: string;
 	declarationItems: readonly string[];
-	rocYear: string;
-	month: string;
-	day: string;
+	date: string;
 	signatureDataUrl: string;
+}
+
+function formatDeclarationDate(date: string) {
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+	if (!match) return date;
+
+	const [, year, month, day] = match;
+	return `西元 ${year} 年 ${Number(month)} 月 ${Number(day)} 日`;
 }
 
 function buildPrintableElement(data: DeclarationPdfData) {
@@ -69,7 +75,7 @@ function buildPrintableElement(data: DeclarationPdfData) {
 				<span>立聲明書人（簽名）：</span>
 				<img src="${data.signatureDataUrl}" alt="簽名" style="height: 64px; max-width: 220px; object-fit: contain;" />
 			</div>
-			<p style="margin: 0;">日期：中華民國 ${data.rocYear} 年 ${data.month} 月 ${data.day} 日</p>
+			<p style="margin: 0;">日期：${formatDeclarationDate(data.date)}</p>
 		</div>
 	`;
 

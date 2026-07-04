@@ -57,7 +57,7 @@ just build
 
 ### `just lint`
 
-運行代碼風格檢查和 ESLint 檢驗。
+運行代碼風格檢查（Oxlint + Oxfmt）。
 
 ```bash
 just lint
@@ -65,18 +65,18 @@ just lint
 
 此命令會檢查：
 
-- Prettier 代碼格式
-- ESLint 代碼質量規則
+- Oxfmt 代碼格式
+- Oxlint 代碼質量規則
 
 ### `just fmt`
 
-自動格式化代碼（使用 Prettier）。
+自動格式化代碼（使用 Oxfmt）。
 
 ```bash
 just fmt
 ```
 
-此命令會修復所有格式不符合 Prettier 標準的代碼。
+此命令會修復所有格式不符合 Oxfmt 標準的代碼。
 
 ### `just test`
 
@@ -169,7 +169,8 @@ A: 嘗試運行 `just init` 重新安裝依賴。
 - `tsconfig.json` - TypeScript 配置
 - `svelte.config.js` - Svelte/SvelteKit 配置
 - `tailwind.config.js` - Tailwind 配置
-- `eslint.config.js` - ESLint 配置
+- `.oxlintrc.json` - Oxlint 配置
+- `.oxfmtrc.json` - Oxfmt 配置
 
 ## 更多資訊
 

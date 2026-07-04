@@ -1,0 +1,61 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "unicorn", "oxc"],
+	"categories": {
+		"correctness": "error",
+		"suspicious": "warn"
+	},
+	"env": {
+		"builtin": true,
+		"browser": true,
+		"node": true
+	},
+	"rules": {
+		"typescript/no-unused-vars": [
+			"error",
+			{
+				"argsIgnorePattern": "^_",
+				"varsIgnorePattern": "^_"
+			}
+		],
+		"eslint/no-underscore-dangle": [
+			"warn",
+			{
+				"allow": [
+					"__GIT_BRANCH__",
+					"__GIT_VERSION__",
+					"__GIT_LAST_COMMIT_TIME__",
+					"__IS_DIRTY__",
+					"__COMMIT_HASH__"
+				]
+			}
+		]
+	},
+	"overrides": [
+		{
+			"files": ["**/*.{spec,test}.{ts,js}"],
+			"plugins": ["vitest"],
+			"env": {
+				"vitest": true
+			}
+		},
+		{
+			"files": ["src/lib/index.ts"],
+			"rules": {
+				"unicorn/no-empty-file": "off"
+			}
+		},
+		{
+			"files": ["**/*.svelte"],
+			"rules": {
+				"unicorn/prefer-add-event-listener": "off"
+			}
+		},
+		{
+			"files": ["**/*.d.ts"],
+			"rules": {
+				"unicorn/require-module-specifiers": "off"
+			}
+		}
+	]
+}

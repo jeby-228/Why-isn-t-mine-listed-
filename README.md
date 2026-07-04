@@ -31,8 +31,8 @@ cp .env.example .env
 
 ### 格式化工具
 
-- Eslint
-- Prettier
+- Oxlint
+- Oxfmt
 
 ### 追蹤與分析工具
 

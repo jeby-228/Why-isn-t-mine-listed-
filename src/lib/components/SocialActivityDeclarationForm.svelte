@@ -9,24 +9,19 @@
 		'公司已明確告知，本人隨時可依個人意願改變此決定，且此決定絕不影響本人於公司之績效考核、職涯發展及勞動權益。'
 	];
 
-	function getTodayRocDate() {
+	function getTodayDateValue() {
 		const now = new Date();
-		return {
-			rocYear: String(now.getFullYear() - 1911),
-			month: String(now.getMonth() + 1),
-			day: String(now.getDate())
-		};
+		const year = now.getFullYear();
+		const month = String(now.getMonth() + 1).padStart(2, '0');
+		const day = String(now.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
 	}
-
-	const today = getTodayRocDate();
 
 	let name = $state('');
 	let department = $state('');
 	let agreedItems = $state<boolean[]>(declarationItems.map(() => false));
 	let signatureDataUrl = $state('');
-	let rocYear = $state(today.rocYear);
-	let month = $state(today.month);
-	let day = $state(today.day);
+	let declarationDate = $state(getTodayDateValue());
 	let submitted = $state(false);
 	let submittedData = $state<DeclarationPdfData | null>(null);
 	let pdfExported = $state(false);
@@ -40,9 +35,7 @@
 			department.trim() !== '' &&
 			allAgreed &&
 			signatureDataUrl !== '' &&
-			rocYear.trim() !== '' &&
-			month.trim() !== '' &&
-			day.trim() !== ''
+			declarationDate !== ''
 	);
 
 	const submittedSnapshot = $derived(submittedData);
@@ -52,9 +45,7 @@
 			name: name.trim(),
 			department: department.trim(),
 			declarationItems,
-			rocYear,
-			month,
-			day,
+			date: declarationDate,
 			signatureDataUrl
 		};
 	}
@@ -78,14 +69,11 @@
 	}
 
 	function handleReset() {
-		const resetDate = getTodayRocDate();
 		name = '';
 		department = '';
 		agreedItems = declarationItems.map(() => false);
 		signatureDataUrl = '';
-		rocYear = resetDate.rocYear;
-		month = resetDate.month;
-		day = resetDate.day;
+		declarationDate = getTodayDateValue();
 		submitted = false;
 		submittedData = null;
 		pdfExported = false;
@@ -275,40 +263,15 @@
 
 					<SignatureField bind:signatureDataUrl />
 
-					<fieldset class="flex flex-wrap items-center justify-end gap-2">
-						<legend class="sr-only">日期（中華民國）</legend>
-						<span class="shrink-0">日期：中華民國</span>
+					<label class="flex w-full max-w-sm flex-col items-end gap-2 sm:flex-row sm:items-center">
+						<span class="shrink-0">日期（西元）</span>
 						<input
-							type="text"
-							inputmode="numeric"
-							bind:value={rocYear}
-							class="input w-16 text-center"
-							placeholder="年"
-							maxlength="3"
+							type="date"
+							bind:value={declarationDate}
+							class="input w-full sm:w-auto"
 							required
 						/>
-						<span>年</span>
-						<input
-							type="text"
-							inputmode="numeric"
-							bind:value={month}
-							class="input w-12 text-center"
-							placeholder="月"
-							maxlength="2"
-							required
-						/>
-						<span>月</span>
-						<input
-							type="text"
-							inputmode="numeric"
-							bind:value={day}
-							class="input w-12 text-center"
-							placeholder="日"
-							maxlength="2"
-							required
-						/>
-						<span>日</span>
-					</fieldset>
+					</label>
 				</section>
 
 				<div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
