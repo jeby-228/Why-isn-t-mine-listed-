@@ -126,8 +126,8 @@ async function waitForImages(element: HTMLElement) {
 						return;
 					}
 
-					image.onload = () => resolve();
-					image.onerror = () => resolve();
+					image.addEventListener('load', () => resolve(), { once: true });
+					image.addEventListener('error', () => resolve(), { once: true });
 				})
 		)
 	);
