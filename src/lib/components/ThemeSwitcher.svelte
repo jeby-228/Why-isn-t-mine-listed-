@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { PaletteIcon } from 'lucide-svelte';
+	import { PaletteIcon } from '@lucide/svelte';
 
 	// 可用的主題列表
 	const themes = [

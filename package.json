@@ -27,7 +27,6 @@
 		"@vitest/coverage-v8": "^4.1.10",
 		"html2canvas": "^1.4.1",
 		"jspdf": "^4.2.1",
-		"lucide-svelte": "^0.563.0",
 		"super-sitemap": "^1.0.12"
 	},
 	"devDependencies": {
@@ -56,7 +55,7 @@
 	"pnpm": {
 		"overrides": {
 			"esbuild": ">=0.28.1",
-			"cookie": ">=0.7.0",
+			"cookie": ">=0.7.0 <2",
 			"fast-xml-parser": ">=5.3.6",
 			"rollup": ">=4.59.0"
 		},
