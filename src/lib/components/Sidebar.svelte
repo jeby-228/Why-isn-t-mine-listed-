@@ -4,11 +4,10 @@
 	import { Navigation } from '@skeletonlabs/skeleton-svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
-	import { env } from '$env/dynamic/public';
 	import NowVersion from '$lib/components/NowVersion.svelte';
 
 	let { show = $bindable() } = $props();
-	let repo_name = env.PUBLIC_GITHUB_REPO;
+	let repo_name = $derived($page.data.githubRepo);
 
 	function isActive(path: string) {
 		return $page.url.pathname === path;
