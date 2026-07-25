@@ -37,14 +37,7 @@ cp .env.example .env
 ### 追蹤與分析工具
 
 - Google Analytics 4 (GA4) - 網站行為與流量追蹤
-- Vercel Speed Insights - 網站速度分析
 
 ## gitflow
 
 ![GitFlow](gitflow.svg)
-
-## 部屬策略
-
-部屬依賴在 Vercel 平台上，採用自動化部屬策略。
-
-![deployFlow](deploy.svg)
