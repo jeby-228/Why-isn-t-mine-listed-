@@ -1,10 +1,4 @@
 <script lang="ts">
-	// vercel speed insights and analytics
-	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
-	import { injectAnalytics } from '@vercel/analytics/sveltekit';
-	injectSpeedInsights();
-	injectAnalytics();
-	// vercel speed insights and analytics
 	// google analytics 4
 	import { page } from '$app/stores';
 	import { trackPageView } from '$lib/analytics';
